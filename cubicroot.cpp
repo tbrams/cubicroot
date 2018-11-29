@@ -6,6 +6,7 @@
 #include <string>
 
 #define FIXED_FLOAT(x) std::fixed <<std::setprecision(2)<<(x)
+#define NORMAL(x) std::fixed <<std::setprecision(0)<<(x)
 
 using namespace std;
 
@@ -22,7 +23,7 @@ int main(int argc, char* argv[]) {
   while (true) {
     int number = random(1, 99);
 
-    cout << "What is the cubit root of " << pow(number, 3) << "? ";
+    cout << "What is the cubit root of " << NORMAL(pow(number, 3)) << "? ";
     timer = std::chrono::high_resolution_clock::now();
 
     getline(cin, input);
