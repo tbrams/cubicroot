@@ -1,18 +1,16 @@
 #include <chrono>
-#include <iomanip>
 #include <cmath>
 #include <iostream>
 #include <sstream>
 #include <string>
 
-#define FIXED_FLOAT(x) std::fixed <<std::setprecision(2)<<(x)
-#define NORMAL(x) std::fixed <<std::setprecision(0)<<(x)
-
 using namespace std;
+bool voice_output = false;
 
 int random(int, int);
+void say(const char*);
 
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
   int answer = 0;
   auto timer = std::chrono::high_resolution_clock::now();  // Init timer
 
@@ -22,8 +20,17 @@ int main(int argc, char* argv[]) {
 
   while (true) {
     int number = random(1, 99);
-
-    cout << "What is the cubit root of " << NORMAL(pow(number, 3)) << "? ";
+    if (argc > 1) {
+      if (string(argv[1]) == "listen")
+        voice_output = true;
+      else {
+        std::cerr << "Usage: " << argv[0] << " [listen]" << std::endl;
+        return 1;
+      }
+    }
+    char buffer[50];
+    sprintf(buffer, "What is the cubic root of %.0f? ", pow(number, 3));
+    say(buffer);
     timer = std::chrono::high_resolution_clock::now();
 
     getline(cin, input);
@@ -36,21 +43,26 @@ int main(int argc, char* argv[]) {
     if (myStream >> answer) {
       // get elapsed miliseconds
       elapsedTime = (chrono::duration_cast<chrono::milliseconds>(
-                        chrono::high_resolution_clock::now() - timer)
-                        .count())/1000;
+                         chrono::high_resolution_clock::now() - timer)
+                         .count()) /
+                    1000;
 
       if (answer == number) {
-        cout << "Yep, that is correct!" << endl;
+        say("Yes, that is correct!\n");
         if (elapsedTime < recordTime) {
           recordTime = elapsedTime;
-          cout << "This is your best time yet " << FIXED_FLOAT(elapsedTime) << " ms" << endl;
+          sprintf(buffer, "This is your best time yet %.2f seconds!\n",
+                  elapsedTime);
+          say(buffer);
         }
       } else {
+        sprintf(buffer, "Nope, it is  %d\n", number);
+        say(buffer);
         cout << "Nope, it is " << number << endl;
       }
     } else {
-      cout << "Invalid number" << endl;
-      cout << "Press 'q' to quit." << endl;
+      say("Invalid number");
+      say("Press 'q' to quit.\n");
     }
   }
   return 0;
@@ -63,4 +75,17 @@ int random(int min, int max) {
     first = false;
   }
   return min + rand() % ((max + 1) - min);
+}
+
+void say(const char* msg) {
+  cout << msg;
+
+  if (voice_output) {
+    string cmd = "say ";
+    string arg = msg;
+    int rv = system((cmd + arg).c_str());
+    if (rv != 0) {
+      std::cout << "Say failed with result code: " << rv << "\n";
+    }
+  }
 }
